@@ -1,0 +1,32 @@
+{% extends "todo/base.html" %}
+
+{% block content %}
+<div class="formArea">
+    
+    {% if error %}
+    <div class="error">
+        {{ error }}
+    </div>
+    {% endif %}
+    <h2>Login</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form">
+            <label for="username">Username</label>
+            <input type="text" name="username">
+        </div>
+        <div class="form">
+            <label for="password">Password</label>
+            <input type="password" name="password">
+        </div>
+
+        <button type="submit">Login</button>
+
+    </form>
+
+    <div class="signup">
+        Need an account? <a href="{% url 'signupuser' %}">Sign Up</a>
+    </div>
+</div>
+{% endblock %}

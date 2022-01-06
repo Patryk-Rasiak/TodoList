@@ -1,0 +1,29 @@
+{% extends "todo/base.html" %}
+
+{% block content %}
+
+<div class="list">
+
+    {% if todos %}
+        <h1>{{ todos.count }} Current Todo{{ todos.count|pluralize }}</h1>
+    {% else %}
+        <h1>Current Todos</h1>
+    {% endif %}
+    {% if todos %}
+        <a href="{% url 'createtodo' %}">New Todo</a>
+        <ul>
+            {% for todo in todos %}
+                <li>
+                <a href="{% url 'viewtodo' todo.id %}"{% if todo.important %} class="important" {% endif %}>
+                    {{ todo.title }}
+                    {% if todo.description %} - {{ todo.description|truncatechars:30 }}{% endif %}
+                </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h2>Looks like you don't have any todos! Nice work.</h2>
+        <a href="{% url 'createtodo' %}">New Todo</a>
+    {% endif %}
+</div>
+{% endblock %}

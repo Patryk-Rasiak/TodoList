@@ -1,0 +1,36 @@
+{% extends "todo/base.html" %}
+
+{% block content %}
+<div class="formArea">
+
+    {% if error %}
+        <div class="error">
+            <p>{{ error }}</p>
+        </div>
+    {% endif %}
+    <h2>Sign Up</h2> 
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form">
+            <label for="username">Username</label>
+            <input type="text" name="username" aria-describedby="usernameHelp">
+            <small id="usernameHelp">Your username must be unique.</small>
+        </div>
+        <div class="form">
+            <label for="password2">Password</label>
+            <input type="password" name="password1">
+        </div>
+        <div class="form">
+            <label for="password2">Confirm Password</label>
+            <input type="password" name="password2">
+        </div>
+        <button type="submit">Sign Up</button>
+    </form>
+    <div class="login">
+        Already have an account? <a href="{% url 'loginuser' %}">Log in.</a>
+    </div>
+</div>
+
+
+{% endblock %}

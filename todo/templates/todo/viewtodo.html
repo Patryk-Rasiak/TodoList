@@ -1,0 +1,58 @@
+{% extends "todo/base.html" %}
+
+{% block content %}
+    <div class="formArea">
+        <h2>Todo</h2>
+        {% if error %}
+            {{ error }}
+        {% endif %}
+        {% if todo.date_completed is None %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form">
+                <label for="title">Title</label>
+                <input type="text" name="title" value="{{ todo.title }}" required>
+            </div>
+            <div class="form">
+                <label for="description">Description</label>
+                <textarea name="description" rows="5">{{ todo.description }}</textarea>
+            </div>
+            <div class="checkbox">
+                <input type="checkbox" name="important" id="important" {% if todo.important %} checked {% endif %}>
+                <label for="important">Important</label>
+            </div>
+            <div class="buttons">
+                <button type="submit" id="SaveButton">Save</button>
+                <form method="POST" action="{% url 'completetodo' todo.id %}">
+                    {% csrf_token %}
+                    <button type="submit" id="CompleteButton">Complete</button>
+                </form>
+        
+                <form method="POST" action="{% url 'deletetodo' todo.id %}">
+                    {% csrf_token %}
+                    <button type="submit" id="DeleteButton">Delete</button>
+                </form>
+            </div>
+        </form>
+        
+
+        {% else %}
+            <div class="info">
+                <label for="title">Title</label>
+                <p name="title" id="title">{{ todo.title }} </p>
+            </div>
+            <div class="info">
+                <label for="description">Description</label>
+                <p name="description" id="description">{{ todo.description }}</p>
+            </div>
+            <div class="info">
+                <label for="important">Important</label>
+                <input type="checkbox" name="important" {% if todo.important %} checked {% endif %} onclick="return false">
+            </div>
+            <div class="info">
+                <label for="completed">Completed</label>
+                <p name="completed" id="completed">{{ todo.date_completed|date:'M j Y H:i'}}</p>
+            </div>
+        {% endif %} 
+    </div>
+{% endblock %}
