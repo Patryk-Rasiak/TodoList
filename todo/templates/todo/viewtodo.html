@@ -23,6 +23,8 @@
             </div>
             <div class="buttons">
                 <button type="submit" id="SaveButton">Save</button>
+            </form>
+
                 <form method="POST" action="{% url 'completetodo' todo.id %}">
                     {% csrf_token %}
                     <button type="submit" id="CompleteButton">Complete</button>
@@ -33,7 +35,6 @@
                     <button type="submit" id="DeleteButton">Delete</button>
                 </form>
             </div>
-        </form>
         
 
         {% else %}
