@@ -1,8 +1,16 @@
 {% extends "todo/base.html" %}
+{% load static %}
 
 {% block content %}
     <div class="formArea">
-        <h2>Todo</h2>
+        <div class="title">
+            <a {% if todo.date_completed is None %}href={% url 'currenttodos' %}{% else %}href={% url 'completedtodos' %}{% endif %}>
+                <img src={% static 'todo/back.png'%} style="width:30px;height:30px;">
+
+            </a>
+            <h2>Todo</h2>
+        </div>
+        
         {% if error %}
             {{ error }}
         {% endif %}
@@ -24,11 +32,6 @@
             <div class="buttons">
                 <button type="submit" id="SaveButton">Save</button>
             </form>
-
-                <form method="POST" action="{% url 'completetodo' todo.id %}">
-                    {% csrf_token %}
-                    <button type="submit" id="CompleteButton">Complete</button>
-                </form>
         
                 <form method="POST" action="{% url 'deletetodo' todo.id %}">
                     {% csrf_token %}

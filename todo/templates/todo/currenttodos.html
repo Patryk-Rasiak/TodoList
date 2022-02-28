@@ -1,4 +1,5 @@
 {% extends "todo/base.html" %}
+{% load static %}
 
 {% block content %}
 
@@ -10,20 +11,27 @@
         <h1>Current Todos</h1>
     {% endif %}
     {% if todos %}
-        <a href="{% url 'createtodo' %}">New Todo</a>
+        <a href="{% url 'createtodo' %}">
+            <img class="add" src={% static 'todo/plus.png' %} style="width:13px;height:13px;">
+            New Todo</a>
         <ul>
             {% for todo in todos %}
-                <li>
-                <a href="{% url 'viewtodo' todo.id %}"{% if todo.important %} class="important" {% endif %}>
-                    {{ todo.title }}
-                    {% if todo.description %} - {{ todo.description|truncatechars:30 }}{% endif %}
-                </a>
-                </li>
+                <div class="todo">
+                    <img src={% static 'todo/circle.png' %} onclick="check(this, {{ todo.id }} )" style="width:50px; height:50px;">
+                    <li>
+                    <a href="{% url 'viewtodo' todo.id %}"{% if todo.important %} class="important" {% endif %}>
+                        {{ todo.title|truncatechars:20 }}
+                        {% if todo.description %} - {{ todo.description|truncatechars:25 }}{% endif %}
+                    </a>
+                    </li>
+                </div>
             {% endfor %}
         </ul>
     {% else %}
-        <h2>Looks like you don't have any todos! Nice work.</h2>
-        <a href="{% url 'createtodo' %}">New Todo</a>
+        <h2>Looks like you don't have any todos. Nice work!</h2>
+        <a href="{% url 'createtodo' %}">
+            <img class="add" src={% static 'todo/plus.png' %} style="width:13px;height:13px;">
+            New Todo</a>
     {% endif %}
 </div>
 {% endblock %}
