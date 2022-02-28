@@ -1,1 +1,3 @@
-An excellent website for task management.
+A beautiful website for managing your daily tasks.
+
+https://mytodolistsite.herokuapp.com
