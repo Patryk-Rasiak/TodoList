@@ -79,14 +79,17 @@
         if(obj.getAttribute('src') === "{% static 'todo/circle.png' %}") {
             obj.src = "{% static 'todo/logo.png' %}";
             obj.parentElement.classList.toggle('hide')
-            setTimeout(function (){
+
   
-                fetch(`{{ '../todo/${id}/complete' }}`, {method: 'POST', headers: { "X-CSRFToken": csrftoken }})
-                .then(response => response)
+            fetch(`{{ '../todo/${id}/complete' }}`, {method: 'POST', headers: { "X-CSRFToken": csrftoken }})
+            .then(response => response)
                           
-              }, 400);
-            location.reload();
-            return false;
+
+            setTimeout(function(){
+                location.reload();
+                return false;
+            }, 200);
+            
         }
     }
 </script>
