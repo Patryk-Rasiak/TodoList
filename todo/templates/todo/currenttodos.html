@@ -1,37 +1,181 @@
 {% extends "todo/base.html" %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 
-<div class="list">
+<div class="list" id="list">
 
     {% if todos %}
-        <h1>{{ todos.count }} Current Todo{{ todos.count|pluralize }}</h1>
+        <div id="caption">
+            <h1 id="caption-text">{{ todos.count }} Current Todo{{ todos.count|pluralize }}</h1>
+        </div>
     {% else %}
         <h1>Current Todos</h1>
     {% endif %}
     {% if todos %}
-        <a href="{% url 'createtodo' %}">
+        <a href="{% url 'create_todo' %}">
             <img class="add" src={% static 'todo/plus.png' %} style="width:13px;height:13px;">
             New Todo</a>
-        <ul>
+        <div class="filter-bar" id="filter-bar">
+            <div>
+                <label for="searchbar">Search</label>
+                <input type="text" placeholder="Search.." id="searchbar" name="searchbar">
+            </div>
+            <div>
+            <label for="selecttodos">Tags</label>
+            <select id="selecttodos" name="selecttodos">
+                <option value="All" id="All" selected>All</option>
+                {% for tag in tags %}
+                    <option value={{ tag.title }}>{{ tag.title }}</option>
+                {% endfor %}
+            </select>
+            </div>
+            <div>
+            <label for="sort-select">Sort by</label>
+            <select id="select-sort" class="filter-bar-select" name="sort-select">
+                <option value="-created">Newest</option>
+                <option value="created">Oldest</option>
+                <option value="deadline">Time remaining ascending</option>
+                <option value="-deadline">Time remaining descending</option>
+                <option value="title">Title descending</option>
+                <option value="-title">Title descending</option>
+                
+            </select>
+            </div>
+        </div>
+        <ul id="todoslist">
+            <div class="todo-headers" id="todo-headers">
+                <span>Title - description</span>
+                <span>Time remaining</span>
+                <span>Tag</span>
+            </div>
             {% for todo in todos %}
                 <div class="todo">
                     <img src={% static 'todo/circle.png' %} onclick="check(this, {{ todo.id }} )" style="width:50px; height:50px;">
                     <li>
-                    <a href="{% url 'viewtodo' todo.id %}"{% if todo.important %} class="important" {% endif %}>
-                        {{ todo.title|truncatechars:20 }}
-                        {% if todo.description %} - {{ todo.description|truncatechars:25 }}{% endif %}
-                    </a>
+                        <a href="{% url 'view_todo' todo.id %}"{% if todo.important %} class="important"{% endif %}>
+                            <span>{{ todo.title|truncatechars:15 }}
+                            {% if todo.description %} - {{ todo.description|truncatechars:10 }}{% endif %}</span>
+                            <span>{% if todo.deadline %} {% if times|index:forloop.counter0 > 0 %}{{ times|index:forloop.counter0 }} {% endif %}{{ labels|index:forloop.counter0 }}{% if times|index:forloop.counter0 %}{{ times|index:forloop.counter0|pluralize }}{% endif %}{% endif %}</span>
+                            <span>{% if todo.tag != 'None' %} #{{ todo.tag }} {% endif %}</span>
+                        </a>
                     </li>
                 </div>
             {% endfor %}
         </ul>
     {% else %}
-        <h2>Looks like you don't have any todos. Nice work!</h2>
-        <a href="{% url 'createtodo' %}">
+        <h2>Your Todo list is empty. Nice work!</h2>
+        <a href="{% url 'create_todo' %}">
             <img class="add" src={% static 'todo/plus.png' %} style="width:13px;height:13px;">
             New Todo</a>
     {% endif %}
 </div>
+
+<script>
+    let select = document.getElementById("selecttodos");
+    let searchBar = document.getElementById("searchbar");
+    let selectSort = document.getElementById("select-sort");
+
+    let getCookie = (name) => {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function check(obj, id) {
+        if(obj.getAttribute('src') === "{% static 'todo/circle.png' %}") {
+            obj.src = "{% static 'todo/logo.png' %}";
+            obj.parentElement.classList.toggle('hide');
+
+            const csrftoken = getCookie('csrftoken');
+            fetch(`{{ '../todo/${id}/complete' }}`, { 
+                method: "POST",
+                body: JSON.stringify({title: searchBar.value, tag: select.value, sort: selectSort.value}),
+                headers: {"X-CSRFToken": csrftoken},
+                })
+                .then(response => response.json())  
+                .then(data => update_todos(data));   
+            
+        }
+    }
+
+
+    let truncateChars = (str, num) => {
+        if(str.length > num) {
+            return str.slice(0, num-1) + "...";
+        } else {
+            return str;
+        }
+    }
+
+    let filterBarOnChange = () => {
+        const csrftoken = getCookie('csrftoken');
+        fetch("{% url 'current_todos' %}", { 
+            method: "POST",
+            body: JSON.stringify({title: searchBar.value, tag: select.value, sort: selectSort.value}),
+            headers: {"X-CSRFToken": csrftoken},
+            })
+            .then(response => response.json())
+            .then(data => update_todos(data));
+    }
+
+
+    if(select !== null) {
+        select.onchange = filterBarOnChange;
+        searchBar.oninput = filterBarOnChange;
+        selectSort.onchange = filterBarOnChange;
+
+    }
+
+    let update_todos = (data) => {
+        todoslist = document.getElementById("todoslist");
+        todoslist.innerHTML = `<div class="todo-headers">
+            <span>Title - description</span>
+            <span>Time remaining</span>
+            <span>Tag</span>
+        </div>`;
+        let todos = data['todos'];
+        let times = data['times'];
+        let labels = data['labels'];
+
+        if(todos.length > 0) {
+            for(let i=0; i<todos.length; i++) {
+                let todo = todos[i];
+                todoslist.innerHTML += `<div class="todo">
+                    <img src={% static 'todo/circle.png' %} onclick="check(this, ${todo.id} )" style="width:50px; height:50px;">
+                    <li>
+                    <a href=http://{{ request.get_host }}/todo/${todo.id} ${todo.important === true ? "class='important'" : ""}>
+                        <span>${ truncateChars(todo.title, 15) }
+                        ${ todo.description !== "" ? ` - ${truncateChars(todo.description, 10)}` : ""}</span>
+                        <span>${ (todo.deadline !== null && typeof todo.deadline !== "undefined" ) ? `${ times[i] > 0 ? times[i] : "" } ${labels[i]}${times[i] > 1 ? 's' : ''}` : ""}</span>
+                        <span>${ todo.tag !== "None" ? ` #${todo.tag}` : "" }</span>
+                    </a>
+                    </li>
+                </div>`;
+            }
+            document.getElementById("caption").innerHTML = `<h1 id="caption-text">${todos.length} Current Todo${todos.length > 1 ? "s" : ""}</h1>`;
+
+        } else if(searchBar.value !== "" || select.value !== "All") {
+            document.getElementById("caption-text").innerHTML = "Current Todos";
+            document.getElementById("todoslist").innerHTML = "<h3>No Todos found..</h3>"
+        } else {
+            document.getElementById("caption").innerHTML = `<h1 id="caption-text">Current Todos</h1><br><br><h2>Your TodoList is empty. Nice work!</h2>`;
+            document.getElementById("filter-bar").classList.add("hidden");
+            document.getElementById("todo-headers").classList.add("hidden");
+        }
+    }
+
+    
+</script>
 {% endblock %}

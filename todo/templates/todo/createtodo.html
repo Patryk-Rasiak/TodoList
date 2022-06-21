@@ -14,18 +14,214 @@
         {% csrf_token %}
         <div class="form">
             <label for="title">Title</label>
-            <input type="text" name="title" required>
+            <input id="todotitle" type="text" name="title" required>
         </div>
         <div class="form">
             <label for="description">Description</label>
-            <textarea name="description"></textarea>
+            <textarea id="tododesc" name="description"></textarea>
+        </div>
+        <div class="tag-form">
+            <label for="tag">Tag</label>
+            <select id="select-tag" name="tag">
+                <option value="New tag" id="New">+ New tag</option>
+                <option value="None" id="None" selected>None</option>
+                {% for tag in tags %}
+                    <option value={{ tag.title }}{% if selected_tag == tag.title %} selected {% endif %}>{{ tag.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="deadline-form">
+            <label for="deadline">Deadline</label>
+            <input id="deadline" name="deadline" type="datetime-local" value="None">
         </div>
         <div class="checkbox">
-            <input type="checkbox" name="important" id="important">
+            <input id="important" type="checkbox" name="important">
             <label for="important">Important</label>
         </div>
         <button type="submit">Save</button>
     </form>
+    <div id="popup" class="popup hidden">
+
+        <div class="popup-content">
+            {% if error %}
+                <div class="error">
+                    {{ error }}
+                </div>
+            {% endif %}
+            <div class="title-create-tag">
+                <h4>Create Tag</h4>
+                <span class="close">&times;</span>
+            </div>
+            <div id="error-div" class="error"></div>
+            <label for="tag-title">Title</label>
+            <input type="text" name="tag-title" id="tag-input" required>
+            <button type="submit" onclick="createTag()">Create</button>
+    
+    
+        </div>
+    </div>
 </div>
+
+
+
+<script>
+    let popup = document.getElementById("popup");
+    let span = document.getElementsByClassName("close")[0];
+    let select = document.getElementById("select-tag");
+    let tagInput = document.getElementById("tag-input");
+    let iso = new Date().toISOString();
+    let minDate = iso.substring(0, iso.length-8);
+    document.getElementById("deadline").min = minDate;
+
+    let getCookie = (name) => {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    /* Two functions below are for not losing data in CreateTodo form when creating a new tag */
+    respondToVisibility = function(element, callback) {
+        var options = {
+          root: document.documentElement
+        }
+      
+        var observer = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            callback(entry.intersectionRatio > 0);
+          });
+        }, options);
+      
+        observer.observe(element);
+      }
+
+      respondToVisibility(popup, visible => {
+        console.log(`visible: ${visible}`)
+        if(visible) {
+            window.onbeforeunload = function() {
+            
+                sessionStorage.setItem("todotitle", document.getElementById("todotitle").value);
+                sessionStorage.setItem("tododesc", document.getElementById("tododesc").value);
+                sessionStorage.setItem("important", document.getElementById("important").checked);
+
+            }
+
+            window.onload = function() {
+            
+                let todotitle = sessionStorage.getItem("todotitle");
+                if (todotitle !== null && typeof todotitle !== "undefined")  {
+                    document.getElementById("todotitle").value = todotitle;
+                }
+        
+                let tododesc = sessionStorage.getItem("tododesc");
+                if (tododesc !== null && typeof tododesc !== "undefined") {
+                    document.getElementById("tododesc").value = tododesc;
+                }
+        
+                let important = sessionStorage.getItem("important");
+                if (important !== null && typeof important !== "undefined") {
+                    document.getElementById("important").checked = important;
+                }
+            
+            }
+
+        }
+        else {
+            window.onload = function() {
+        
+                document.getElementById("todotitle").value = "";
+                document.getElementById("tododesc").value = "";
+                document.getElementById("important").checked = false;
+                
+            }
+        }
+    });
+
+    select.onchange = function() {
+        let selectedObj = select.options[select.selectedIndex];
+        if(selectedObj.id === "New") {
+            document.getElementById("error-div").innerHTML = "";
+            popup.classList.remove("hidden");
+            document.getElementById("tag-input").value = "";
+        }
+
+    }
+
+    span.onclick = function() {
+        popup.classList.add("hidden");
+        document.getElementById("None").selected=true;
+    }
+
+
+
+    function createTag() {
+        let data = document.getElementById('tag-input').value;
+        const csrftoken = getCookie('csrftoken');
+        fetch("{% url 'create_tag' %}", {
+            method: 'POST',
+            body: JSON.stringify({
+                'title': data
+            }),
+            headers: { "X-CSRFToken": csrftoken }
+        })
+        .then(response => response.json())
+        .then(createdTag => {
+            if('error' in createdTag) {
+                document.getElementById("error-div").innerHTML = `<h5>${createdTag['error']}</h5>`;
+            } else {
+
+            
+            let option = document.createElement("option")
+            option.text = createdTag['title'];
+            option.value = createdTag['title'];
+            select.add(option)
+            
+            let tmp = new Array();
+            for (let i=0; i<select.options.length; i++) {
+                tmp[i] = new Array();
+                tmp[i][0] = select.options[i].text;
+                tmp[i][1] = select.options[i].value;
+                tmp[i][2] = select.options[i].id;
+            }
+            tmp.sort();
+            while (select.options.length > 0) {
+                select.options[0] = null;
+            }
+            for (let i=0; i<tmp.length; i++) {
+                
+                let op = new Option(tmp[i][0], tmp[i][1]);
+            
+                if(tmp[i][2] !== 'undefined') {
+                    op.setAttribute("id", tmp[i][2]);
+                }
+
+                select.options[i] = op;
+
+                if(tmp[i][0] === createdTag['title']) {
+                    select.options[i].selected = true;
+                }
+            }
+
+            
+
+            popup.classList.add("hidden");
+            }
+
+        });
+        
+        
+    }
+
+
+</script>
 
 {% endblock %}

@@ -27,15 +27,17 @@
         </li>
         {% if user.is_authenticated %}
             <li>
-                <a href="{% url 'currenttodos' %}">Current</a>
+                <a href="{% url 'current_todos' %}">Current</a>
             </li>
             <li>
-                <a href="{% url 'completedtodos' %}">Completed</a>
+                <a href="{% url 'completed_todos' %}">Completed</a>
             </li>
         {% endif %}
         {% if user.is_authenticated %}
+            <span>Hi, {{ user.username }}!</span>
             <li>
-                <form method="POST" action="{% url 'logoutuser' %}">
+                
+                <form method="POST" action="{% url 'logout_user' %}">
                     {% csrf_token %}
                     <button type="submit">Log Out</button>
                 </form>
@@ -43,7 +45,7 @@
         {% else %}
             
             <li>
-                <a href="{% url 'signupuser' %}">Sign Up</a><a href="{% url 'loginuser' %}">Login</a>
+                <a href="{% url 'sign_up_user' %}">Sign Up</a><a href="{% url 'login_user' %}">Login</a>
             </li>
 
             
@@ -56,42 +58,6 @@
 </br>
 
 
-<script>
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    const csrftoken = getCookie('csrftoken');
-    function check(obj, id) {
-        if(obj.getAttribute('src') === "{% static 'todo/circle.png' %}") {
-            obj.src = "{% static 'todo/logo.png' %}";
-            obj.parentElement.classList.toggle('hide')
-
-  
-            fetch(`{{ '../todo/${id}/complete' }}`, {method: 'POST', headers: { "X-CSRFToken": csrftoken }})
-            .then(response => response)
-                          
-
-            setTimeout(function(){
-                location.reload();
-                return false;
-            }, 200);
-            
-        }
-    }
-</script>
 </body>
 </html>
